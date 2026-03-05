@@ -8,6 +8,8 @@ import type { PlanasGradacionRow, PlanasMetodoRow, PlanasPayload } from '@/types
 
 const DRAFT_KEY = 'planas_form_draft_v1'
 const DEBOUNCE_MS = 700
+const REVISORES = ['-', 'FABIAN LA ROSA'] as const
+const APROBADORES = ['-', 'IRMA COAQUIRA'] as const
 
 const GRADACION_SIZES: ReadonlyArray<{ pasa: string; retenido: string }> = [
     { pasa: '2 in.', retenido: '1 1/2 in.' },
@@ -30,6 +32,18 @@ const TMN_MIN_ROWS: ReadonlyArray<{ tmn: string; masa: number }> = [
     { tmn: 'No. 4', masa: 1000 },
 ]
 
+const EQUIPO_OPTIONS = {
+    dispositivo_calibre_codigo: ['-'],
+    balanza_01g_codigo: ['-'],
+    horno_codigo: ['-'],
+} as const
+
+const withCurrentOption = (value: string | null | undefined, base: readonly string[]) => {
+    const current = (value ?? '').trim()
+    if (!current || base.includes(current)) return base
+    return [...base, current]
+}
+
 const parseNum = (value: string) => {
     if (value.trim() === '') return null
     const parsed = Number(value)
@@ -46,6 +60,13 @@ const parseIntNum = (value: string) => {
 const round4 = (value: number) => Number(value.toFixed(4))
 
 const getCurrentYearShort = () => new Date().getFullYear().toString().slice(-2)
+const formatTodayShortDate = () => {
+    const d = new Date()
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const yy = String(d.getFullYear()).slice(-2)
+    return `${dd}/${mm}/${yy}`
+}
 
 const normalizeMuestraCode = (raw: string): string => {
     const value = raw.trim().toUpperCase()
@@ -152,7 +173,7 @@ const normalizeMetodoRows = (rows?: PlanasMetodoRow[] | null): PlanasMetodoRow[]
 const initialState = (): PlanasPayload => ({
     muestra: '',
     numero_ot: '',
-    fecha_ensayo: '',
+    fecha_ensayo: formatTodayShortDate(),
     realizado_por: '',
     relacion_dimensional: '-',
     metodo_ensayo: 'A',
@@ -162,14 +183,14 @@ const initialState = (): PlanasPayload => ({
     masa_seca_constante_g: null,
     gradacion_rows: defaultGradacionRows(),
     metodo_rows: defaultMetodoRows(),
-    dispositivo_calibre_codigo: '',
-    balanza_01g_codigo: 'EQP-0046',
-    horno_codigo: 'EQP-0049',
+    dispositivo_calibre_codigo: '-',
+    balanza_01g_codigo: '-',
+    horno_codigo: '-',
     nota: '',
     revisado_por: '-',
-    revisado_fecha: '',
+    revisado_fecha: formatTodayShortDate(),
     aprobado_por: '-',
-    aprobado_fecha: '',
+    aprobado_fecha: formatTodayShortDate(),
 })
 
 function preparePayload(payload: PlanasPayload): PlanasPayload {
@@ -827,35 +848,23 @@ export default function PlanasForm() {
                                         </td>
                                         <td className="border-r border-b border-slate-300 px-2 py-1 text-center">Dispositivo de calibre proporcional</td>
                                         <td className="w-56 border-r border-b border-slate-300 p-1">
-                                            <input
-                                                className={denseInputClass}
-                                                value={form.dispositivo_calibre_codigo ?? ''}
-                                                onChange={(e) => setField('dispositivo_calibre_codigo', e.target.value)}
-                                                autoComplete="off"
-                                                data-lpignore="true"
-                                            />
+                                            <select className={denseInputClass} value={form.dispositivo_calibre_codigo ?? '-'} onChange={(e) => setField('dispositivo_calibre_codigo', e.target.value)}>
+                                                {withCurrentOption(form.dispositivo_calibre_codigo, EQUIPO_OPTIONS.dispositivo_calibre_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                         <td className="border-r border-b border-slate-300 px-2 py-1 text-center">Balanza 0.1 g</td>
                                         <td className="w-56 border-b border-slate-300 p-1">
-                                            <input
-                                                className={denseInputClass}
-                                                value={form.balanza_01g_codigo ?? ''}
-                                                onChange={(e) => setField('balanza_01g_codigo', e.target.value)}
-                                                autoComplete="off"
-                                                data-lpignore="true"
-                                            />
+                                            <select className={denseInputClass} value={form.balanza_01g_codigo ?? '-'} onChange={(e) => setField('balanza_01g_codigo', e.target.value)}>
+                                                {withCurrentOption(form.balanza_01g_codigo, EQUIPO_OPTIONS.balanza_01g_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td className="border-r border-slate-300 px-2 py-1 text-center">Horno</td>
                                         <td className="border-r border-slate-300 p-1">
-                                            <input
-                                                className={denseInputClass}
-                                                value={form.horno_codigo ?? ''}
-                                                onChange={(e) => setField('horno_codigo', e.target.value)}
-                                                autoComplete="off"
-                                                data-lpignore="true"
-                                            />
+                                            <select className={denseInputClass} value={form.horno_codigo ?? '-'} onChange={(e) => setField('horno_codigo', e.target.value)}>
+                                                {withCurrentOption(form.horno_codigo, EQUIPO_OPTIONS.horno_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                         <td className="border-r border-slate-300 px-2 py-1 text-center"></td>
                                         <td className="p-1"></td>
@@ -887,13 +896,13 @@ export default function PlanasForm() {
                             <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
                                 <div className="border-b border-slate-300 px-2 py-1 text-sm font-semibold">Revisado:</div>
                                 <div className="space-y-2 p-2">
-                                    <input
+                                    <select
                                         className={denseInputClass}
-                                        value={form.revisado_por ?? ''}
+                                        value={form.revisado_por ?? '-'}
                                         onChange={(e) => setField('revisado_por', e.target.value)}
-                                        autoComplete="off"
-                                        data-lpignore="true"
-                                    />
+                                    >
+                                        {REVISORES.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                     <input
                                         className={denseInputClass}
                                         value={form.revisado_fecha ?? ''}
@@ -909,13 +918,13 @@ export default function PlanasForm() {
                             <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
                                 <div className="border-b border-slate-300 px-2 py-1 text-sm font-semibold">Aprobado:</div>
                                 <div className="space-y-2 p-2">
-                                    <input
+                                    <select
                                         className={denseInputClass}
-                                        value={form.aprobado_por ?? ''}
+                                        value={form.aprobado_por ?? '-'}
                                         onChange={(e) => setField('aprobado_por', e.target.value)}
-                                        autoComplete="off"
-                                        data-lpignore="true"
-                                    />
+                                    >
+                                        {APROBADORES.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                     <input
                                         className={denseInputClass}
                                         value={form.aprobado_fecha ?? ''}
