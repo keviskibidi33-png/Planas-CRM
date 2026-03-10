@@ -33,9 +33,9 @@ const TMN_MIN_ROWS: ReadonlyArray<{ tmn: string; masa: number }> = [
 ]
 
 const EQUIPO_OPTIONS = {
-    dispositivo_calibre_codigo: ['-'],
-    balanza_01g_codigo: ['-'],
-    horno_codigo: ['-'],
+    dispositivo_calibre_codigo: ['-', 'EQP-0038'],
+    balanza_01g_codigo: ['-', 'EQP-0046'],
+    horno_codigo: ['-', 'EQP-0049'],
 } as const
 
 const withCurrentOption = (value: string | null | undefined, base: readonly string[]) => {
