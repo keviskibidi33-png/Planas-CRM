@@ -173,7 +173,7 @@ const normalizeMetodoRows = (rows?: PlanasMetodoRow[] | null): PlanasMetodoRow[]
 const initialState = (): PlanasPayload => ({
     muestra: '',
     numero_ot: '',
-    fecha_ensayo: formatTodayShortDate(),
+    fecha_ensayo: '',
     realizado_por: '',
     relacion_dimensional: '-',
     metodo_ensayo: 'A',
