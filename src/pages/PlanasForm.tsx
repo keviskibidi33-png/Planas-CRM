@@ -7,6 +7,18 @@ import { getPlanasEnsayoDetail, saveAndDownloadPlanasExcel, savePlanasEnsayo } f
 import type { PlanasGradacionRow, PlanasMetodoRow, PlanasPayload } from '@/types'
 import FormatConfirmModal from '../components/FormatConfirmModal'
 
+const buildFormatPreview = (sampleCode: string | undefined, materialCode: 'SU' | 'AG', ensayo: string) => {
+    const currentYear = new Date().getFullYear().toString().slice(-2)
+    const normalized = (sampleCode || '').trim().toUpperCase()
+    const fullMatch = normalized.match(/^(\d+)(?:-[A-Z0-9. ]+)?-(\d{2,4})$/)
+    const partialMatch = normalized.match(/^(\d+)(?:-(\d{2,4}))?$/)
+    const match = fullMatch || partialMatch
+    const numero = match?.[1] || 'xxxx'
+    const year = (match?.[2] || currentYear).slice(-2)
+    return `Formato N-${numero}-${materialCode}-${year} ${ensayo}`
+}
+
+
 const DRAFT_KEY = 'planas_form_draft_v1'
 const DEBOUNCE_MS = 700
 const REVISORES = ['-', 'FABIAN LA ROSA'] as const
@@ -978,7 +990,7 @@ export default function PlanasForm() {
             </div>
             <FormatConfirmModal
                 open={pendingFormatAction !== null}
-                formatLabel={`Formato N-xxxx-AG-${new Date().getFullYear().toString().slice(-2)} PLANAS`}
+                formatLabel={buildFormatPreview(form.muestra, 'AG', 'PLANAS')}
                 actionLabel={pendingFormatAction ? 'Guardar y Descargar' : 'Guardar'}
                 onClose={() => setPendingFormatAction(null)}
                 onConfirm={() => {
