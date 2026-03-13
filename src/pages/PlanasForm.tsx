@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Beaker, Download, Loader2, Trash2 } from 'lucide-react'
 import { getPlanasEnsayoDetail, saveAndDownloadPlanasExcel, savePlanasEnsayo } from '@/services/api'
 import type { PlanasGradacionRow, PlanasMetodoRow, PlanasPayload } from '@/types'
+import FormatConfirmModal from '../components/FormatConfirmModal'
 
 const DRAFT_KEY = 'planas_form_draft_v1'
 const DEBOUNCE_MS = 700
@@ -60,13 +61,6 @@ const parseIntNum = (value: string) => {
 const round4 = (value: number) => Number(value.toFixed(4))
 
 const getCurrentYearShort = () => new Date().getFullYear().toString().slice(-2)
-const formatTodayShortDate = () => {
-    const d = new Date()
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yy = String(d.getFullYear()).slice(-2)
-    return `${dd}/${mm}/${yy}`
-}
 
 const normalizeMuestraCode = (raw: string): string => {
     const value = raw.trim().toUpperCase()
@@ -188,9 +182,9 @@ const initialState = (): PlanasPayload => ({
     horno_codigo: '-',
     nota: '',
     revisado_por: '-',
-    revisado_fecha: formatTodayShortDate(),
+    revisado_fecha: '',
     aprobado_por: '-',
-    aprobado_fecha: formatTodayShortDate(),
+    aprobado_fecha: '',
 })
 
 function preparePayload(payload: PlanasPayload): PlanasPayload {
@@ -335,6 +329,8 @@ export default function PlanasForm() {
         localStorage.removeItem(`${DRAFT_KEY}:${ensayoId ?? 'new'}`)
         setForm(initialState())
     }, [ensayoId])
+    const [pendingFormatAction, setPendingFormatAction] = useState<boolean | null>(null)
+
 
     const save = useCallback(
         async (download: boolean) => {
@@ -955,14 +951,14 @@ export default function PlanasForm() {
                         Limpiar todo
                     </button>
                     <button
-                        onClick={() => void save(false)}
+                        onClick={() => setPendingFormatAction(false)}
                         disabled={loading}
                         className="h-11 rounded-lg border border-slate-900 bg-white font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 disabled:opacity-50"
                     >
                         {loading ? 'Guardando...' : 'Guardar'}
                     </button>
                     <button
-                        onClick={() => void save(true)}
+                        onClick={() => setPendingFormatAction(true)}
                         disabled={loading}
                         className="flex h-11 items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 font-semibold text-white shadow-sm transition hover:bg-emerald-800 disabled:opacity-50"
                     >
@@ -980,6 +976,19 @@ export default function PlanasForm() {
                     </button>
                 </div>
             </div>
+            <FormatConfirmModal
+                open={pendingFormatAction !== null}
+                formatLabel={`Formato N-xxxx-AG-${new Date().getFullYear().toString().slice(-2)} PLANAS`}
+                actionLabel={pendingFormatAction ? 'Guardar y Descargar' : 'Guardar'}
+                onClose={() => setPendingFormatAction(null)}
+                onConfirm={() => {
+                    if (pendingFormatAction === null) return
+                    const shouldDownload = pendingFormatAction
+                    setPendingFormatAction(null)
+                    void save(shouldDownload)
+                }}
+            />
+
         </div>
     )
 }
