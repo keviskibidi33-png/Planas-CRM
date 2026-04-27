@@ -452,7 +452,7 @@ export default function PlanasForm() {
                                             onBlur={() => setField('fecha_ensayo', normalizeFlexibleDate(form.fecha_ensayo))}
                                             autoComplete="off"
                                             data-lpignore="true"
-                                            placeholder="DD/MM/AA"
+                                            placeholder="YYYY/MM/DD"
                                         />
                                     </td>
                                     <td className="border-t border-slate-300 p-1">
