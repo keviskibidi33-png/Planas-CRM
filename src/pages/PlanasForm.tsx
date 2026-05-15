@@ -79,8 +79,8 @@ const normalizeMuestraCode = (raw: string): string => {
     if (!value) return ''
     const compact = value.replace(/\s+/g, '')
     const year = getCurrentYearShort()
-    const match = compact.match(/^(\d+)(?:-SU)?(?:-(\d{2}))?$/)
-    return match ? `${match[1]}-SU-${match[2] || year}` : value
+    const match = compact.match(/^(\d+)(?:-AG)?(?:-(\d{2}))?$/)
+    return match ? `${match[1]}-AG-${match[2] || year}` : value
 }
 
 const normalizeNumeroOtCode = (raw: string): string => {
